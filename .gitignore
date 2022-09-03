@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Visual Studio
+.vs
+
+# IDEs
+.idea/
+.vscode/
+
+# Build output
+build/

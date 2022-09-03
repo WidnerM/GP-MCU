@@ -185,7 +185,7 @@ void LibMain::ProcessKnob(uint8_t column, uint8_t value)  // processes a midi me
                 if (widgetExists(widgetname + "_p"))  // if there's a mc_k_1_5_p type caption, process first field as resolution (integer)
                 {
                     caption = getWidgetCaption(widgetname + "_p");
-                    std::vector< std::string>& name_segments = ParseWidgetName(caption, '_');
+                    std::vector< std::string> name_segments = ParseWidgetName(caption, '_');
                     (name_segments.size() >= 1) ? resolution = (int)std::stoi("0" + name_segments[0]) : resolution = 200;  // default to 200
                 }
                 newValue = getWidgetValue(widgetname);

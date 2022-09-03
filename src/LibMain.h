@@ -1,8 +1,9 @@
 #pragma once
 
-#include <interfaces/CPP/GigPerformerAPI.h>
-#include <interfaces/CPP/GPUtils.h>
-#include <interfaces/CPP/GPMidiMessages.h>
+#include "gigperformer/sdk/GPMidiMessages.h"
+#include "gigperformer/sdk/GPUtils.h"
+#include "gigperformer/sdk/GigPerformerAPI.h"
+#include "gigperformer/sdk/types.h"
 #include <cstdio>
 #include <iostream>
 #include <string>
@@ -22,7 +23,7 @@ const std::string XMLProductDescription =
 
 // External code runs in the LibMain class, inherited from GigPerformerAPI
 
-class LibMain : public GigPerformerAPI
+class LibMain : public gigperformer::sdk::GigPerformerAPI
 {
 
 protected:
@@ -49,7 +50,7 @@ public:
 
     // from LibMain.cpp.  We make these to simplify sending the same midi message to all destinations if we have multiple destinations
     void sendMidiMessage(std::string MidiMessage);
-    void sendMidiMessage(GPMidiMessage MidiMessage);
+    void sendMidiMessage(gigperformer::sdk::GPMidiMessage MidiMessage);
     void sendMidiMessage(const uint8_t* MidiMessage, int length);
     void SetSurfaceLayout(uint8_t config);
 
@@ -210,7 +211,7 @@ public:
     void OnGlobalPlayStateChanged(bool playing) override
     {
         consoleLog(std::string("playing = ") + (playing ? " true" : "false"));
-        sendMidiMessage(GPMidiMessage::makeNoteOnMessage(SID_TRANSPORT_PLAY, (playing == 1) ? BUTTON_LIT : BUTTON_OFF, 0));
+        sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(SID_TRANSPORT_PLAY, (playing == 1) ? BUTTON_LIT : BUTTON_OFF, 0));
     }
 
     void OnWidgetStateChanged(const std::string& widgetname, int newstate) override
@@ -231,7 +232,7 @@ public:
         std::string widget_prefix, control_type, control_bank, control_number, control_color, setwidget;
 
         scriptLog("MC: Callback for Caption " + widgetName, 1);
-        std::vector< std::string>& name_segments = ParseWidgetName(widgetName, '_');
+        std::vector< std::string> name_segments = ParseWidgetName(widgetName, '_');
 
         if (name_segments.size() >= 4)
         {
@@ -288,7 +289,7 @@ public:
 
             // widget names are generally structured as [controller id]_[control type]_[bank]_[unit]_[optional additional arguments]
             // typical would be "mc_f_3_1" to indicate MCU controller, fader, bank 3, fader 1.  Banks are typically 1-8, knobs and faders numbered 0-7.
-            std::vector< std::string>& name_segments = ParseWidgetName(widgetName, '_');
+            std::vector< std::string> name_segments = ParseWidgetName(widgetName, '_');
 
             if (widgetName == LAYOUT_WIDGETNAME) {  // if it's a widget that changes the control layout
                 column = (uint8_t) round(1 / std::max(newValue, 1.0 / 127)) - 1;
@@ -435,7 +436,7 @@ public:
         DisplayRow(Surface.Row[2], true);
 
         // Light or turn off the SID_MIXER button to indicate if we're in Setlist mode (mode==1) or rackspace mode
-        sendMidiMessage(GPMidiMessage::makeNoteOnMessage(Surface.CommandButtons[SETLIST_TOGGLE], (mode == 1) ? BUTTON_LIT : BUTTON_OFF, 0));
+        sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(Surface.CommandButtons[SETLIST_TOGGLE], (mode == 1) ? BUTTON_LIT : BUTTON_OFF, 0));
     }
 
     // examine a vector of widgets and structure the Surface structure to reflect widgets in the rackspace or global rackspace
@@ -448,7 +449,7 @@ public:
             widgetname = *index;
             widgetname = widgetname.substr(widgetname.find(":") + 1);
 
-            std::vector< std::string>& name_segments = ParseWidgetName(widgetname, '_');
+            std::vector< std::string> name_segments = ParseWidgetName(widgetname, '_');
 
             // scriptLog("bS sees widget " + widgetname, 1);
 

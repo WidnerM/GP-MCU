@@ -30,7 +30,7 @@ std::string  LibMain::GetPanelXML(int index)
     {
         // We assume the panels are in the same folder as the library
         // scriptLog("MC: Path to panels: " + getPathToMe() + relativePanelLocations[index], 0);
-        GPUtils::loadTextFile(getPathToMe() + relativePanelLocations[index], text);
+        gigperformer::sdk::GPUtils::loadTextFile(getPathToMe() + relativePanelLocations[index], text);
     }
     return text;
 }
@@ -92,7 +92,7 @@ void LibMain::sendMidiMessage(std::string MidiMessage) {
     }
 }
 
-void LibMain::sendMidiMessage(GPMidiMessage MidiMessage) {
+void LibMain::sendMidiMessage(gigperformer::sdk::GPMidiMessage MidiMessage) {
     for (int i = 0; i < MidiOut.size(); i++) {
         sendMidiMessageToMidiOutDevice(MidiOut[i], MidiMessage);
     }
@@ -120,4 +120,9 @@ void LibMain::SetSurfaceLayout(uint8_t config) {
         Surface.ButtonLayout = config;
         DisplayModeButtons();
     }
+}
+
+gigperformer::sdk::GigPerformerAPI* gigperformer::sdk::CreateGPExtension(LibraryHandle handle)
+{
+    return new LibMain(handle);
 }
