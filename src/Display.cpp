@@ -78,6 +78,31 @@ void LibMain::DisplayBankInfo(std::string text)
     sendMidiMessage(binmessage);
 }
 
+uint8_t LibMain::KnobDotValue(uint8_t column)
+{
+    uint8_t dotvalue = 0;
+    if (Surface.Row[KNOB_BUTTON_ROW].BankValid())
+    {
+        std::string widgetname = Surface.Row[KNOB_BUTTON_ROW].WidgetPrefix + "_" + Surface.Row[KNOB_BUTTON_ROW].ActiveBankID() +
+            "_" + std::to_string(column);
+//        scriptLog("Knob Dot Value: " + widgetname + " " + std::to_string(getWidgetValue(widgetname)), true);
+        if (widgetExists(widgetname)) dotvalue = (getWidgetValue(widgetname) > 0 ? 64 : 0);
+    }
+    return dotvalue;
+}
+
+uint8_t LibMain::KnobRingValue(uint8_t column)
+{
+    uint8_t ringvalue = 0;
+    if (Surface.Row[KNOB_ROW].BankValid())
+    {
+        std::string widgetname = Surface.Row[KNOB_ROW].WidgetPrefix + "_" + Surface.Row[KNOB_ROW].ActiveBankID() +
+            "_" + std::to_string(column);
+        //        scriptLog("Knob Dot Value: " + widgetname + " " + std::to_string(getWidgetValue(widgetname)), true);
+        if (widgetExists(widgetname)) ringvalue = (uint8_t) (getWidgetValue(widgetname) * 10.9999 + 1);
+    }
+    return ringvalue;
+}
 
 // Show value of a widget on it's linked control surface item
 void LibMain::DisplayWidgetValue(SurfaceRow Row, uint8_t column, double value)
@@ -102,11 +127,12 @@ void LibMain::DisplayWidgetValue(SurfaceRow Row, uint8_t column, double value)
     else if (Row.Type == KNOB_TYPE)
     {
         MidiMessage[1] = KNOBRING_0 + (column & 0x0F);
-        MidiMessage[2] = (uint8_t)(value * 10.9999) + 1;
+        MidiMessage[2] = (uint8_t)(value * 10.9999) + 1 + KnobDotValue(column);
     }
     else if (Row.Type == KNOB_BUTTON_TYPE)
     {
-
+        MidiMessage[1] = KNOBRING_0 + (column & 0x0F);
+        MidiMessage[2] = KnobRingValue(column) + KnobDotValue(column);
     }
     sendMidiMessage(MidiMessage, sizeof(MidiMessage));
 }
@@ -123,6 +149,62 @@ void LibMain::DisplayModeButtons()
     sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(Surface.CommandButtons[FADERS_SELECT], (Surface.TextDisplay == SHOW_FADERS) ? BUTTON_LIT : BUTTON_OFF, 0));
     sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(Surface.CommandButtons[KNOBS_SELECT], (Surface.TextDisplay == SHOW_KNOBS) ? BUTTON_LIT : BUTTON_OFF, 0));
     sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(Surface.CommandButtons[SONGSRACKS_SELECT], (Surface.TextDisplay == SHOW_SONGS) ? BUTTON_LIT : BUTTON_OFF, 0));
+}
+
+// Adjust row assignments for where Racks/Songs/Variations/Songparts are shown
+void LibMain::SetRowAssignments()
+{
+    std::string row_tags[] = TAG_ARRAY;
+    std::string widgetval;
+    uint8_t x;
+
+    bool setlistmode = inSetlistMode();
+
+    for (uint8_t x = 0; x < Surface.ButtonRows; x++)
+    {
+        Surface.Row[x].Showing = SHOW_ASSIGNED;
+    }
+
+    if (widgetExists(RACKROW_WIDGETNAME)) {
+        widgetval = getWidgetCaption(RACKROW_WIDGETNAME);
+        for (x = 0; x < Surface.ButtonRows; x++)
+        {
+            if (row_tags[x] == widgetval)
+            {
+                Surface.RackRow = x;
+                Surface.Row[Surface.RackRow].Showing = (setlistmode) ? SHOW_SONGS : SHOW_RACKSPACES;
+                DisplayRow(Surface.Row[Surface.RackRow], true);
+                break;
+            }
+        }
+    }
+
+    if (widgetExists(VARROW_WIDGETNAME)) {
+        widgetval = getWidgetCaption(VARROW_WIDGETNAME);
+        for (x = 0; x < Surface.ButtonRows; x++)
+        {
+            if (row_tags[x] == widgetval)
+            {
+                Surface.VarRow = x;
+                Surface.Row[Surface.VarRow].Showing = (setlistmode) ? SHOW_SONGPARTS : SHOW_VARIATIONS;
+                DisplayRow(Surface.Row[Surface.VarRow], true);
+                break;
+            }
+        }
+    }
+    // scriptLog("RackRow: " + std::to_string(Surface.RackRow), 1);
+    // scriptLog("VarRow: " + std::to_string(Surface.VarRow), 1);
+}
+
+void LibMain::SyncBankIDs(uint8_t syncrow)
+{
+    if (Surface.Row[syncrow].BankValid()) {
+        std::string rowname = Surface.Row[syncrow].ActiveBankID();
+        for (int x = 0; x < 9; x++)
+        {
+            if (Surface.Row[x].makeActiveBank(rowname)) DisplayRow(Surface.Row[x]);
+        }
+    }
 }
 
 // Display a notification message - should have this notify on the MCU display, but we'd need some kind of timer to refresh the display
@@ -148,3 +230,142 @@ void LibMain::DisplayControlLabel(uint8_t column, const std::string label)
     }
 }
 
+// Displays Faders or Knobs on the LCD display
+void LibMain::DisplayFaders(SurfaceRow Row)
+{
+    std::string widgetname, oscwidget, oscname;
+    std::string Caption, Label, Extras, TextValue;
+    double Value = 0, oldvalue;
+    std::string hexmessage, subtext, binmessage;
+    uint8_t upcolor = 0;
+    uint8_t downcolor = 0;
+    int x;
+
+
+    if (! Row.BankValid()) // if there are no FaderBanks or ActiveFaderBank is out of range we clear the display
+    {
+        if ((Surface.TextDisplay == SHOW_FADERS && Row.WidgetID == "f") || (Surface.TextDisplay == SHOW_KNOBS && Row.WidgetID == "k")) { ClearMCUDisplay(); }
+    }
+    else
+    { // Set the bank indicator widgets, if they exist
+        for (x = 0; x < Row.BankIDs.size(); x++)
+        {
+            widgetname = Row.WidgetPrefix + (std::string)"_" + Row.BankIDs[x] + "_i";
+            // scriptLog("DisplayFaders setting bank indicator " + widgetname, 1);
+            if (widgetExists(widgetname)) {
+                setWidgetValue(widgetname, (x == Row.ActiveBank) ? 1.0 : 0.3); // light up panel for active bank, otherwise turn it off
+            }
+        }
+
+        if ((Surface.TextDisplay == SHOW_FADERS && Row.WidgetID == "f") || (Surface.TextDisplay == SHOW_KNOBS && Row.WidgetID == "k"))
+        {
+            // check for a bank name on mc_f_[ActiveBank]_p widget & display it on upper right of display
+            widgetname = Row.WidgetPrefix + (std::string)"_" + Row.BankIDs[Row.ActiveBank] + "_p";
+            if (widgetExists(widgetname))
+            {
+                //        DisplayBankInfo(getWidgetCaption(widgetname) + ":Faders " + std::to_string(Surface.ActiveFaderBank));
+                if (Surface.TextDisplay != SHOW_SONGS) {
+                    DisplayBankInfo(getWidgetCaption(widgetname) + ":" + Row.RowLabel + " " + Row.BankIDs[Row.ActiveBank]);
+                }
+            }
+            else // if a name doesn't exist for the bank, just show the bank ID
+            {
+                //        DisplayBankInfo("Faders " + std::to_string(Surface.ActiveFaderBank));
+                if (Surface.TextDisplay != SHOW_SONGS) {
+                    DisplayBankInfo(Row.RowLabel + " " + Row.BankIDs[Row.ActiveBank]);
+                }
+            }
+        }
+    }
+
+    // Set the positions and displays for each of the faders using the active bank
+    for (x = Row.Columns; x >= 0; x--)
+    {
+        if (!Row.BankIDs.empty())
+        {
+            widgetname = Row.WidgetPrefix + (std::string)"_" + Row.BankIDs[Row.ActiveBank] + "_" + std::to_string(x);
+            if (widgetExists(widgetname) == true)
+            {
+                Value = getWidgetValue(widgetname);
+                TextValue = getWidgetTextValue(widgetname);
+                Label = getWidgetCaption(widgetname);
+                Caption = "";
+                if ((Row.Type == KNOB_TYPE && Surface.TextDisplay == SHOW_KNOBS) || (Row.Type == FADER_TYPE && Surface.TextDisplay == SHOW_FADERS))
+                {
+                    DisplayControlLabel((uint8_t)x, Label); // show the label on the MCU LCD by sending midi
+                }
+                if (Row.Type == FADER_TYPE || Row.Type == KNOB_TYPE) { DisplayWidgetValue(Row, (uint8_t)x, Value); }
+            }
+            else  // we end up here if the widget doesn't exist, so then we set the whole thing blank
+            {
+                Label = " ";
+                Caption = " ";
+                Value = 0;
+                // Show = false;
+            }
+        }
+        else {
+            Label = " ";
+        }
+        // if the OSC interface widget exists, set or clear it appropriately
+        oscwidget = Row.WidgetPrefix + (std::string)"_active_" + std::to_string(x);
+
+        // scriptLog("MC: Set " + oscwidget + " to " + Label,1);
+        if (widgetExists(oscwidget) == true)
+        {
+            setWidgetCaption(oscwidget, Label);
+            // OSC won't send update for Caption only, we need to make sure Value changes.
+            if (Value == getWidgetValue(oscwidget)) { Value > 0.9 ? setWidgetValue(oscwidget, Value - 0.05) : setWidgetValue(oscwidget, Value + 0.05); }
+            setWidgetValue(oscwidget, Value);
+        }
+    }
+}
+
+
+void LibMain::DisplayButtonRow(SurfaceRow Row, uint8_t firstbutton, uint8_t number)
+{
+    std::string widgetname, oscwidget;
+    std::string Caption, Label, Extras;
+    double Value = 0;
+    int x;
+    uint8_t upcolor = 0;
+    uint8_t downcolor = 0;
+
+    for (x = 0; x < std::size(Row.BankIDs); x++)  // cycle through banks to turn on/off the panel widget indicators for active bank
+    {
+        widgetname = THIS_PREFIX + (std::string)"_" + Row.WidgetID + "_" + Row.BankIDs[x] + "_i";
+        if (widgetExists(widgetname)) {
+            setWidgetValue(widgetname, (x == Row.ActiveBank) ? 1 : 0.3); // light up panel for active bank, otherwise turn it off
+            if (x == (Row.ActiveBank - 1)) {    // light up the button for "next bank" of one exists
+                upcolor = BUTTON_LIT;
+            }
+            if (x == (Row.ActiveBank + 1))
+            {
+                downcolor = BUTTON_LIT;
+            }
+        }
+    }
+
+    for (x = firstbutton + number - 1; x >= firstbutton; x--)
+    {
+        if (Row.ActiveBank >= 0) {
+            widgetname = THIS_PREFIX + (std::string)"_" + Row.WidgetID + "_" + Row.BankIDs[Row.ActiveBank] + "_" + std::to_string(x);
+        }
+        if (Row.ActiveBank >= 0 && widgetExists(widgetname))
+        {
+            Value = getWidgetValue(widgetname);
+            Label = getWidgetCaption(widgetname);
+        }
+        else  // we end up here if the widget doesn't exist or there's no ActiveBank
+        {
+            Label = "";
+            Caption = "";
+            Value = 0.0;
+        }
+        oscwidget = THIS_PREFIX + (std::string)"_" + Row.WidgetID + "_active_" + std::to_string(x);  // same widget name with the bank # set to "active"
+        setWidgetCaption(oscwidget, Label);
+        setWidgetValue(oscwidget, 1.0 - Value);  // ensure a widget toggle so caption gets propagated
+        setWidgetValue(oscwidget, Value);
+        DisplayWidgetValue(Row, x, Value);
+    }
+}

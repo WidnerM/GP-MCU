@@ -64,11 +64,14 @@ public:
     void DisplayBankInfo(std::string text);
     void DisplayModeButtons();
     void DisplayButton(uint8_t button, uint8_t value);
+    void SetRowAssignments();
+    void SyncBankIDs(uint8_t syncrow);
 
     void DisplayWidgetValue(SurfaceRow Row, uint8_t column, double Value);
     void DisplayTopLeft(uint8_t column, const std::string caption);
     void DisplayControlLabel(uint8_t column, const std::string caption);
-
+    uint8_t KnobDotValue(uint8_t column);
+    uint8_t KnobRingValue(uint8_t column);
 
     // from Inputs.cpp
     void ProcessButton(uint8_t button, uint8_t value);
@@ -91,15 +94,9 @@ public:
     void DisplayRacks(SurfaceRow Row, bool forcetocurrent);
     void DisplayVariations(SurfaceRow Row, int current);
     void DisplayRow(SurfaceRow Row, bool forcetocurrent);
-
-    // from Knobs.cpp  // void DisplayKnobs();  // Shows the active knob bank (as stored in Surface.ActiveKnobBank)
-
-    // from Faders.cpp
+    void DisplayRow(SurfaceRow Row);
     void DisplayFaders(SurfaceRow Row);  // Shows the active knob bank (as stored in Surface.ActiveKnobBank)
-
-    // from Buttons.cpp
-    void LightButtonsForRow(SurfaceRow Row, uint8_t firstbutton, uint8_t number);
-
+    void DisplayButtonRow(SurfaceRow Row, uint8_t firstbutton, uint8_t number);
 
        
     // General routines we define before the varoius callbacks
@@ -231,7 +228,7 @@ public:
 
         std::string widget_prefix, control_type, control_bank, control_number, control_color, setwidget;
 
-        scriptLog("MC: Callback for Caption " + widgetName, 1);
+        // scriptLog("MC: Callback for Caption " + widgetName, 1);
         std::vector< std::string> name_segments = ParseWidgetName(widgetName, '_');
 
         if (name_segments.size() >= 4)
@@ -298,7 +295,11 @@ public:
                     SetSurfaceLayout(column);
                 }
             }
-            else if (name_segments.size() >= 4)  // our widgets all have at least 4 fields in the name, e.g., mc_f_3_1
+            else if (widgetName == RACKROW_WIDGETNAME || widgetName == VARROW_WIDGETNAME)
+            {
+                SetRowAssignments();
+            }
+            else if (name_segments.size() >= 4)  // our widgets all have at least 4 fields in the name, e.g., mc_f_bank_1
             {
                 widget_prefix = name_segments[0];
                 control_type = name_segments[1];
@@ -316,7 +317,7 @@ public:
                 {
                     for (row = 0; row < std::size(Surface.Row); row++)  // cycle through each Row of control
                     {
-                        if (control_type == Surface.Row[row].WidgetID && Surface.Row[row].Showing == SHOW_ASSIGNED && column <= Surface.Row[row].Columns && Surface.Row[row].BankIDs.size() > Surface.Row[row].ActiveBank)
+                        if (control_type == Surface.Row[row].WidgetID && Surface.Row[row].Showing == SHOW_ASSIGNED && column <= Surface.Row[row].Columns && Surface.Row[row].BankValid())
                         {
                             //scriptLog("MC: Callback for " + widgetName, 1);
                             if (control_bank.compare(Surface.Row[row].BankIDs[Surface.Row[row].ActiveBank]) == 0)  // if it's the active bank we show it on the control surface
@@ -328,10 +329,6 @@ public:
                                 {
                                     DisplayTopLeft(column, Surface.Row[row].RowLabel + std::to_string(column + 1) + ": " + getWidgetTextValue(widgetName));
                                 }
-                            }
-                            else if (control_bank == (std::string)"active") {
-                                // scriptLog("MC: Trying to set " + widgetName, 1);
-                                // SetButtonColor(Surface.Row[row], column, (newValue != 0) ? BUTTON_LIT : BUTTON_OFF);
                             }
                         }
                     }
@@ -430,10 +427,17 @@ public:
 
         DisplayTopLeft(0, "");
 
-        Surface.Row[3].Showing = (mode == 1) ? SHOW_SONGS : SHOW_RACKSPACES;
-        Surface.Row[2].Showing = (mode == 1) ? SHOW_SONGPARTS : SHOW_VARIATIONS;
-        DisplayRow(Surface.Row[3], true);
-        DisplayRow(Surface.Row[2], true);
+        if (Surface.RackRow < Surface.ButtonRows)
+        {
+            Surface.Row[Surface.RackRow].Showing = (mode == 1) ? SHOW_SONGS : SHOW_RACKSPACES;
+            DisplayRow(Surface.Row[Surface.RackRow], true);
+        }
+
+        if (Surface.VarRow < Surface.ButtonRows)
+        {
+            Surface.Row[Surface.VarRow].Showing = (mode == 1) ? SHOW_SONGPARTS : SHOW_VARIATIONS;
+            DisplayRow(Surface.Row[Surface.VarRow], true);
+        }
 
         // Light or turn off the SID_MIXER button to indicate if we're in Setlist mode (mode==1) or rackspace mode
         sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(Surface.CommandButtons[SETLIST_TOGGLE], (mode == 1) ? BUTTON_LIT : BUTTON_OFF, 0));
@@ -456,6 +460,14 @@ public:
             if (widgetname == LAYOUT_WIDGETNAME)
             { 
                 listenForWidget(LAYOUT_WIDGETNAME, true);
+            }
+            else if (widgetname == RACKROW_WIDGETNAME)
+            {
+                listenForWidget(RACKROW_WIDGETNAME, true);
+            }
+            else if (widgetname == VARROW_WIDGETNAME)
+            {
+                listenForWidget(VARROW_WIDGETNAME, true);
             }
             else if (name_segments.size() >= 4)
             {
@@ -536,6 +548,9 @@ public:
 
         // scriptLog("Done buildSurface", 1);
 
+        // Set up which rows, if any, show racks and variations
+        SetRowAssignments();
+
         // Button row initializations
         for (row = 0; row < Surface.ButtonRows; row++) {
             setActiveBank(row);
@@ -588,7 +603,7 @@ public:
             }
         }
 
-        // we need a routine to decisively set the active fader bank because it's possible that upon rackspace or variation change more than one, or zero, are set
+        // we need to decisively set the active bank because it's possible that upon rackspace or variation change more than one, or zero, are set
         setActiveBank(KNOB_ROW);
         DisplayFaders(Surface.Row[KNOB_ROW]);
 
@@ -596,6 +611,8 @@ public:
         DisplayFaders(Surface.Row[FADER_ROW]);
         // scriptLog("Finishing OnVariationChanged.", 1);
         Surface.reportWidgetChanges = true;
+
+        DisplayModeButtons();
     }
 
  

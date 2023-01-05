@@ -1,34 +1,33 @@
 #pragma once
 
 #include "MCU_Constructs.h"
-#include "MCU_Colors.h"
 #include "MCU_Buttons.h"
 #include "LibMain.h"
 
 // Define identifiers GP user must use to name their widgets
 #define THIS_PREFIX "mc"
-#define RECORD_PREFIX "mc_r"
-#define SOLO_PREFIX "mc_s"
-#define MUTE_PREFIX "mc_m"
-#define SELECT_PREFIX "mc_l"
+#define RECORD_PREFIX "mc_rec"
+#define SOLO_PREFIX "mc_solo"
+#define MUTE_PREFIX "mc_mute"
+#define SELECT_PREFIX "mc_sel"
 #define FADER_PREFIX "mc_f"
 #define KNOB_PREFIX "mc_k"
-#define KNOB_BUTTON_PREFIX "mc_b"
-#define FUNCTION_PREFIX "mc_n"
-#define VIEW_PREFIX "mc_v"
+#define KNOB_BUTTON_PREFIX "mc_push"
+#define FUNCTION_PREFIX "mc_fn"
+#define VIEW_PREFIX "mc_view"
 #define ROW_PREFIX_ARRAY {RECORD_PREFIX, SOLO_PREFIX, MUTE_PREFIX, SELECT_PREFIX, FUNCTION_PREFIX, VIEW_PREFIX, KNOB_BUTTON_PREFIX, FADER_PREFIX, KNOB_PREFIX}
 
 
 
-#define RECORD_TAG "r"
-#define SOLO_TAG "s"
-#define MUTE_TAG "m"
-#define SELECT_TAG "l"
+#define RECORD_TAG "rec"
+#define SOLO_TAG "solo"
+#define MUTE_TAG "mute"
+#define SELECT_TAG "sel"
 #define FADER_TAG "f"
 #define KNOB_TAG "k"
-#define KNOB_BUTTON_TAG "b"
-#define FUNCTION_TAG "n"
-#define VIEW_TAG "v"
+#define KNOB_BUTTON_TAG "push"
+#define FUNCTION_TAG "fn"
+#define VIEW_TAG "view"
 
 #define TAG_ARRAY {RECORD_TAG, SOLO_TAG, MUTE_TAG, SELECT_TAG, FUNCTION_TAG, VIEW_TAG, KNOB_BUTTON_TAG, FADER_TAG, KNOB_TAG}
 #define ROW_LABEL_ARRAY { "Rec", "Solo", "Mute", "Sel", "Fn", "View", "KPush" , "Fader", "Knob"}
@@ -74,15 +73,16 @@
 #define FADERS_BANK_UP 7
 #define FADERS_BANK_DOWN 8
 #define SETLIST_TOGGLE 9
-#define DEFAULT_COMMAND_BUTTONS {SID_ASSIGNMENT_TRACK, SID_ASSIGNMENT_PAN, SID_ASSIGNMENT_EQ, SID_TRANSPORT_FAST_FORWARD, SID_TRANSPORT_REWIND, SID_FADERBANK_NEXT_BANK, SID_FADERBANK_PREV_BANK, SID_FADERBANK_NEXT_CH, SID_FADERBANK_PREV_CH, SID_TRANSPORT_RECORD }
+#define DEFAULT_COMMAND_BUTTONS {SID_ASSIGNMENT_TRACK, SID_ASSIGNMENT_PAN, SID_ASSIGNMENT_EQ, SID_FADERBANK_GLOBAL, SID_FADERBANK_FLIP, SID_FADERBANK_NEXT_BANK, SID_FADERBANK_PREV_BANK, SID_FADERBANK_NEXT_CH, SID_FADERBANK_PREV_CH, SID_TRANSPORT_RECORD }
 #define ICON_MPLUS_COMMAND_BUTTONS {SID_AUTOMATION_WRITE, SID_AUTOMATION_READ, SID_MARKER, SID_TRANSPORT_FAST_FORWARD, SID_TRANSPORT_REWIND, SID_FADERBANK_NEXT_BANK, SID_FADERBANK_PREV_BANK, SID_FADERBANK_NEXT_CH, SID_FADERBANK_PREV_CH, SID_TRANSPORT_RECORD }
+#define XTOUCH_COMMAND_BUTTONS {SID_ASSIGNMENT_TRACK, SID_ASSIGNMENT_PAN, SID_ASSIGNMENT_EQ, SID_TRANSPORT_FAST_FORWARD, SID_TRANSPORT_REWIND, SID_FADERBANK_NEXT_BANK, SID_FADERBANK_PREV_BANK, SID_FADERBANK_NEXT_CH, SID_FADERBANK_PREV_CH, SID_TRANSPORT_RECORD }
 
 class SurfaceRow
 {
 public:
 	std::vector<std::string> BankIDs;
 	std::string WidgetPrefix; // the hardware identifier (e.g. "mc") + the WidgetID (e.g. "f") together to simplify a bunch of widget checks (e.g., mc_f)
-	std::string WidgetID;  // the widget ID that signifies this row, e.g., f, k, b, etc.  Right now these are defined in Display.cpp as part of the InitializeMCU routine.
+	std::string WidgetID;  // the widget ID that signifies this row, e.g., f, k, b, etc.
 	std::string RowLabel = "";  // a friendly name for what the row is, e.g., "Faders", "Knobs", etc.  Used to indicate on the display what bank of controls the displayed labels are for
 
 	std::string Type = BUTTON_TYPE;
@@ -96,6 +96,12 @@ public:
 	bool BankValid()
 	{
 		return (ActiveBank >= 0 && ActiveBank < BankIDs.size());
+	}
+
+	std::string ActiveBankID()
+	{
+		if (BankValid()) return BankIDs[ActiveBank];
+		else return "";
 	}
 
 	bool addBank(std::string bank) {
@@ -192,6 +198,9 @@ public:
 	int FirstShownRack = 0;
 	uint8_t CommandButtons[10] = DEFAULT_COMMAND_BUTTONS;
 	uint8_t ButtonLayout = 0;
+	uint8_t RackRow = 255;
+	uint8_t VarRow = 255;
+
 
 	bool Initialize()
 	{
@@ -216,10 +225,10 @@ public:
 			Row[x].Columns = row_columns[x];
 			Row[x].FirstID = first_midi[x];
 			Row[x].MidiCommand = midi_commands[x];
-			Row[x].Showing = SHOW_ASSIGNED; // show_array[x]; thinking about how to handle this...  SHOW_ASSIGNED which means show what the WidgetID says, or use the SHOW_xxxx codes
+			Row[x].Showing = SHOW_ASSIGNED; // SHOW_ASSIGNED means show normal row.  Can alternately be set to show racks, songs, etc.
 		}
-		Row[3].Showing = SHOW_SONGS;
-		Row[2].Showing = SHOW_SONGPARTS;
+		// Row[3].Showing = SHOW_SONGS;
+		// Row[2].Showing = SHOW_SONGPARTS;
 
 		return true;
 	}

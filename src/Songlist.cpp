@@ -14,7 +14,6 @@ void LibMain::DisplaySongs(SurfaceRow Row, bool forcetocurrent)
     int x, songindex, current, songcount;
     std::string TopLine = "", BottomLine = "";
     std::string songname, hexmessage, binmessage, oscwidget, oscwidget2;
-    int Color = SLMKIII_BLACK;
     double selected = 0;
 
     // GP sends current song over OSC, which we can display with OSC{/CurrentSongName, -} in the label field
@@ -166,7 +165,6 @@ void LibMain::DisplayRacks(SurfaceRow Row, bool forcetocurrent)
     int x, rackindex, current, rackcount;
     std::string TopLine = "", BottomLine = "";
     std::string rackname, hexmessage, binmessage, oscwidget, oscwidget2;
-    int Color = SLMKIII_BLACK;
     double selected = 0;
 
     // GP sends current song over OSC we can display with OSC{/CurrentSongName, -} in the label field
@@ -239,12 +237,17 @@ void LibMain::DisplayRacks(SurfaceRow Row, bool forcetocurrent)
     }
 }
 
+void LibMain::DisplayRow(SurfaceRow Row)
+{
+    DisplayRow(Row, false);
+}
+
 void LibMain::DisplayRow(SurfaceRow Row, bool forcetocurrent)
 {
     if (Row.Showing == SHOW_SONGS) { DisplaySongs(Row, forcetocurrent); }
     else if (Row.Showing == SHOW_SONGPARTS) { DisplaySongParts(Row, forcetocurrent); }
     else if (Row.Showing == SHOW_VARIATIONS) { DisplayVariations(Row, -1); }
     else if (Row.Showing == SHOW_RACKSPACES) { DisplayRacks(Row, forcetocurrent); }
-    else { LightButtonsForRow(Row, 0, 8);
-    }
+    else if (Row.Type == FADER_TYPE || Row.Type == KNOB_TYPE) { DisplayFaders(Row); }
+    else { DisplayButtonRow(Row, 0, 8); }
 }

@@ -39,3 +39,7 @@ You can use it as a base for your own extensions developed in plain C++ (without
     ```
 
     **Make sure to run the script from the Visual Studio developer command prompt!**
+
+
+    https://github.com/jean-emmanuel/open-stage-control-mcu
+    https://github.com/NicoG60/TouchMCU

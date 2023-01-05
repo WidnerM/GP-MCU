@@ -3,7 +3,7 @@
 
 // List of panels
 std::vector<std::string> panelNames = { "MCU to OSC" };
-std::vector<std::string> relativePanelLocations = { "MCU2OSC.gppanel" };
+std::vector<std::string> relativePanelLocations = { "MCUtoOSC.gppanel" };
 
 
 std::string pathToMe; // This needs to be initialized from the initialization secttion of the LibMain class so it can be used in the standalone functions directly below
@@ -38,7 +38,7 @@ std::string  LibMain::GetPanelXML(int index)
 
 
 // List of menu items
-std::vector<std::string> menuNames = { "MCU Standard Layout", "Icon M+ Layout", "Re-initialize extention" };
+std::vector<std::string> menuNames = { "MCU Standard Layout", "Icon M+ Layout", "X-Touch Layout", "Re-initialize extention" };
 
 
 int LibMain::GetMenuCount()
@@ -60,9 +60,6 @@ void LibMain::InvokeMenu(int index)
 {
     std::vector <std::string> widgetlist;
     std::string widgetname;
-    const uint8_t std_commandarray[] = DEFAULT_COMMAND_BUTTONS;
-    const uint8_t icon_commandarray[] = ICON_MPLUS_COMMAND_BUTTONS;
-
 
     if (index >= 0 && index < menuNames.size())
     {
@@ -77,6 +74,10 @@ void LibMain::InvokeMenu(int index)
             else SetSurfaceLayout(1);
             break;
         case 2:
+            if (widgetExists(LAYOUT_WIDGETNAME)) { setWidgetValue(LAYOUT_WIDGETNAME, 0.33333); }
+            else SetSurfaceLayout(1);
+            break;
+        case 3:
             OnStatusChanged(GPStatus_GigFinishedLoading);
             break;
 
@@ -107,10 +108,9 @@ void LibMain::sendMidiMessage(const uint8_t* MidiMessage, int length) {
 // MCU compatible surfaces come in different configurations.  We have a configuration variable in the Surface structure so we can define different action keys for different functions
 void LibMain::SetSurfaceLayout(uint8_t config) {
     const uint8_t std_commandarray[] = DEFAULT_COMMAND_BUTTONS;
-    const uint8_t icon_commandarray[] = ICON_MPLUS_COMMAND_BUTTONS;
-    const uint8_t config_array[2][sizeof(std_commandarray)] = { DEFAULT_COMMAND_BUTTONS, ICON_MPLUS_COMMAND_BUTTONS };
+    const uint8_t config_array[3][sizeof(std_commandarray)] = { DEFAULT_COMMAND_BUTTONS, ICON_MPLUS_COMMAND_BUTTONS, XTOUCH_COMMAND_BUTTONS };
 
-    if (config >= 0 && config <= 1)
+    if (config >= 0 && config <= 2)
     {
         for (auto x = 0; x < sizeof(Surface.CommandButtons); ++x)
         {

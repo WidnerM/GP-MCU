@@ -5,6 +5,9 @@
 #define MCU_OUT       "Platform M+ V2.15"
 #define MIDI_OUT_WIDGETNAME "mc_midiout"
 #define LAYOUT_WIDGETNAME "mc_layout"
+#define RACKROW_WIDGETNAME "mc_rackrow"
+#define VARROW_WIDGETNAME "mc_variationrow"
+
 #define EXTENSION_IDENTIFIER "MCU extension"
 
 #define UNIVERSAL_QUERY "F0 7E 7F 06 01 F7"

@@ -6,7 +6,6 @@
 #include "LibMain.h"
 
 
-
 // process button inputs from the control surface
 void LibMain::ProcessButton(uint8_t button, uint8_t value)  // processes a midi button press
 {
@@ -16,57 +15,64 @@ void LibMain::ProcessButton(uint8_t button, uint8_t value)  // processes a midi 
     if (value == 127) {  // only process button downs
         if (button == Surface.CommandButtons[FADERS_BANK_UP])  // next Fader bank
         {
-            Surface.Row[FADER_ROW].IncrementBank();
             if (Surface.TextDisplay == SHOW_KNOBS)
             {
                 Surface.TextDisplay = SHOW_FADERS;
                 DisplayModeButtons();
             }
-            // scriptLog("NextFader moved to " + Surface.Row[FADER_ROW].BankIDs[Surface.Row[FADER_ROW].ActiveBank] + std::to_string(Surface.Row[FADER_ROW].ActiveBank), 1);
-            DisplayFaders(Surface.Row[FADER_ROW]);
+            if (Surface.Row[FADER_ROW].IncrementBank())
+            {
+                SyncBankIDs(FADER_ROW);
+            }
+            // DisplayFaders(Surface.Row[FADER_ROW]);
         }
         else if (button == Surface.CommandButtons[FADERS_BANK_DOWN])  // prior Fader bank
         {
-            Surface.Row[FADER_ROW].DecrementBank();
             if (Surface.TextDisplay == SHOW_KNOBS)
             {
                 Surface.TextDisplay = SHOW_FADERS;
                 DisplayModeButtons();
             }
-            // scriptLog("NextFader moved to " + Surface.Row[FADER_ROW].BankIDs[Surface.Row[FADER_ROW].ActiveBank] + std::to_string(Surface.Row[FADER_ROW].ActiveBank), 1);
-            DisplayFaders(Surface.Row[FADER_ROW]);
+            if (Surface.Row[FADER_ROW].DecrementBank())
+            {
+                SyncBankIDs(FADER_ROW);
+            }
         }
         else if (button == Surface.CommandButtons[KNOBS_BANK_UP])  // next Knob bank
         {
-            Surface.Row[KNOB_ROW].IncrementBank();
             if (Surface.TextDisplay == SHOW_FADERS)
             {
                 Surface.TextDisplay = SHOW_KNOBS;
                 DisplayModeButtons();
             }
-            DisplayFaders(Surface.Row[KNOB_ROW]);
+            if (Surface.Row[KNOB_ROW].IncrementBank())
+            {
+                SyncBankIDs(KNOB_ROW);
+            }
         }
         else if (button == Surface.CommandButtons[KNOBS_BANK_DOWN])  // prior Knob bank
         {
-            Surface.Row[KNOB_ROW].DecrementBank();
             if (Surface.TextDisplay == SHOW_FADERS)
             {
                 Surface.TextDisplay = SHOW_KNOBS;
                 DisplayModeButtons();
             }
-            DisplayFaders(Surface.Row[KNOB_ROW]);
+            if (Surface.Row[KNOB_ROW].DecrementBank())
+            {
+                SyncBankIDs(KNOB_ROW);
+            }
         }
         else if (button == Surface.CommandButtons[SONGS_BANK_UP])   // next song/rack bank
         {
             if (inSetlistMode() == 1) { Surface.FirstShownSong += 8; }
             else { Surface.FirstShownRack += 8; }
-            DisplayRow(Surface.Row[3],false);
+            if (Surface.RackRow < Surface.ButtonRows) { DisplayRow(Surface.Row[Surface.RackRow], false); }
         }
         else if (button == Surface.CommandButtons[SONGS_BANK_DOWN])  // prior Song bank
         {
             if (inSetlistMode() == 1) { Surface.FirstShownSong -= 8; }
             else { Surface.FirstShownRack -= 8; }
-            DisplayRow(Surface.Row[3], false);
+            if (Surface.RackRow < Surface.ButtonRows) { DisplayRow(Surface.Row[Surface.RackRow], false); }
         }
         else if (button == Surface.CommandButtons[SETLIST_TOGGLE])  // Toggle between in and out of Setlist mode
         {
@@ -92,7 +98,7 @@ void LibMain::ProcessButton(uint8_t button, uint8_t value)  // processes a midi 
         {
             Surface.TextDisplay = SHOW_SONGS;
             DisplayModeButtons();
-            DisplayRow(Surface.Row[3], false);
+            if (Surface.RackRow < Surface.ButtonRows) { DisplayRow(Surface.Row[Surface.RackRow], false); }
         }
         else if (button == SID_TRANSPORT_PLAY) // 
         {
