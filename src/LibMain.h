@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <iostream>
 #include <string>
+#include <math.h>
 #include "MCU_Classes.h"
 #include "General_Utils.h"
 
@@ -367,11 +368,11 @@ public:
         }
         else
         {
-            sprintf_s(str, "MCU:  Unexpected midi event: ");
+            sprintf(str, "MCU:  Unexpected midi event: ");
             for (x = 0; x < length; x++)
                 {
-                    sprintf_s(extra, " %0x", data[x]);
-                    strcat_s(str, extra);
+                    sprintf(extra, " %0x", data[x]);
+                    strcat(str, extra);
                 }
                 scriptLog(str, 0);
         }
