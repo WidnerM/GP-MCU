@@ -10,7 +10,8 @@ include(FetchContent)
 FetchContent_Declare(
   gp-sdk
   GIT_REPOSITORY https://github.com/gigperformer/gp-sdk.git
-  GIT_TAG 3d4fa49c3d6f96851961893ce51896b4450e59ae # v46
+  # GIT_TAG 3d4fa49c3d6f96851961893ce51896b4450e59ae # v46
+  GIT_TAG 6c5432518ef42ea0870fb44597e9d1d3780e2f98 # v44
 )
 FetchContent_MakeAvailable(gp-sdk)
 
