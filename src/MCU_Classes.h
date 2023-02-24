@@ -77,6 +77,31 @@
 #define ICON_MPLUS_COMMAND_BUTTONS {SID_AUTOMATION_WRITE, SID_AUTOMATION_READ, SID_MARKER, SID_TRANSPORT_FAST_FORWARD, SID_TRANSPORT_REWIND, SID_FADERBANK_NEXT_BANK, SID_FADERBANK_PREV_BANK, SID_FADERBANK_NEXT_CH, SID_FADERBANK_PREV_CH, SID_TRANSPORT_RECORD }
 #define XTOUCH_COMMAND_BUTTONS {SID_ASSIGNMENT_TRACK, SID_ASSIGNMENT_PAN, SID_ASSIGNMENT_EQ, SID_TRANSPORT_FAST_FORWARD, SID_TRANSPORT_REWIND, SID_FADERBANK_NEXT_BANK, SID_FADERBANK_PREV_BANK, SID_FADERBANK_NEXT_CH, SID_FADERBANK_PREV_CH, SID_TRANSPORT_RECORD }
 
+// The SurfaceWidget class is the conduit used for translating GP widget information and changes to control surface displayscontroller_widgettype_bankname_position
+// These are always temporary.  We do not store the state of widgets or control surface items in the extension.
+class SurfaceWidget
+{
+public:
+	std::string SurfacePrefix;  // typical widget label structure as "controller_widgettype_bankname_position" eg. sl_k_pan_3
+	std::string WidgetID;
+	std::string BankID;
+	uint8_t Column = 255;
+
+	bool Validated = false;  // user may create widgets not on the surface or in banks that don't yet exist - this simplifies detection and crash avoidance
+	bool IsSurfaceItemWidget = false;  // indicates the widget maps to a physical surface control
+	bool IsRowParameterWidget = false;  // things like names or resolutions on GP widgets that don't correspond to physical surface controls
+
+	int RowNumber = -1;  // If this widget is associated with a Row, used primarily to determine if it's the active bank or not
+
+	double Value = 0.0;
+	std::string TextValue = "";
+	std::string Caption = "";
+	int RgbLitColor = 0, RgbDimColor = 0;
+
+	int resolution = 1000;
+
+};
+
 class SurfaceRow
 {
 public:
@@ -255,6 +280,23 @@ public:
 		Row[b].WidgetPrefix = temp.WidgetPrefix;
 
 	}
+
+	int IdentifySurfaceRow(std::string rowidentifier) {
+		int x;
+
+		for (x = 0; x < std::size(Row); x++)
+		{
+			if (Row[x].WidgetID == rowidentifier)
+				return x;
+		}
+		return -1;
+	}
+
+	bool RowValid(int rownum)
+	{
+		return (rownum >= 0 && rownum < std::size(Row));
+	}
+
 };
 
 

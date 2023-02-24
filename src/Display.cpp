@@ -226,7 +226,7 @@ void LibMain::DisplayTopLeft(uint8_t column, const std::string label)
 void LibMain::DisplayControlLabel(uint8_t column, const std::string label)
 {
     if (column <= 7) {
-        DisplayText(column, 1, label, 6);
+        DisplayText(column, 1, label, 7);
     }
 }
 
@@ -235,6 +235,7 @@ void LibMain::DisplayFaders(SurfaceRow Row)
 {
     std::string widgetname, oscwidget, oscname;
     std::string Caption, Label, Extras, TextValue;
+    SurfaceWidget widget;
     double Value = 0, oldvalue;
     std::string hexmessage, subtext, binmessage;
     uint8_t upcolor = 0;
@@ -259,19 +260,25 @@ void LibMain::DisplayFaders(SurfaceRow Row)
 
         if ((Surface.TextDisplay == SHOW_FADERS && Row.WidgetID == "f") || (Surface.TextDisplay == SHOW_KNOBS && Row.WidgetID == "k"))
         {
-            // check for a bank name on mc_f_[ActiveBank]_p widget & display it on upper right of display
-            widgetname = Row.WidgetPrefix + (std::string)"_" + Row.BankIDs[Row.ActiveBank] + "_p";
+            // check for a bank name on mc_fp_[ActiveBank] widget & display it on upper right of display
+            widgetname = Row.WidgetPrefix + (std::string)"p_" + Row.BankIDs[Row.ActiveBank];
             if (widgetExists(widgetname))
             {
-                //        DisplayBankInfo(getWidgetCaption(widgetname) + ":Faders " + std::to_string(Surface.ActiveFaderBank));
                 if (Surface.TextDisplay != SHOW_SONGS) {
                     DisplayBankInfo(getWidgetCaption(widgetname) + ":" + Row.RowLabel + " " + Row.BankIDs[Row.ActiveBank]);
                 }
             }
-            else // if a name doesn't exist for the bank, just show the bank ID
+            else // if a p widnget doesn't exist for the bank, look for a name on the i widget
             {
-                //        DisplayBankInfo("Faders " + std::to_string(Surface.ActiveFaderBank));
-                if (Surface.TextDisplay != SHOW_SONGS) {
+                widgetname = Row.WidgetPrefix + (std::string)"_" + Row.BankIDs[Row.ActiveBank] + "_i";
+                if (widgetExists(widgetname))
+                {
+                    if (Surface.TextDisplay != SHOW_SONGS) {
+                        DisplayBankInfo(getWidgetCaption(widgetname) + ":" + Row.RowLabel + " " + Row.BankIDs[Row.ActiveBank]);
+                    }
+                }
+
+                else if (Surface.TextDisplay != SHOW_SONGS) {
                     DisplayBankInfo(Row.RowLabel + " " + Row.BankIDs[Row.ActiveBank]);
                 }
             }
@@ -284,17 +291,20 @@ void LibMain::DisplayFaders(SurfaceRow Row)
         if (!Row.BankIDs.empty())
         {
             widgetname = Row.WidgetPrefix + (std::string)"_" + Row.BankIDs[Row.ActiveBank] + "_" + std::to_string(x);
-            if (widgetExists(widgetname) == true)
+            widget = PopulateWidget(widgetname);
+            if (widget.IsSurfaceItemWidget)
             {
-                Value = getWidgetValue(widgetname);
-                TextValue = getWidgetTextValue(widgetname);
-                Label = getWidgetCaption(widgetname);
-                Caption = "";
+
+                Value = widget.Value;
+                Label = widget.Caption;
+                TextValue = widget.TextValue;
+
                 if ((Row.Type == KNOB_TYPE && Surface.TextDisplay == SHOW_KNOBS) || (Row.Type == FADER_TYPE && Surface.TextDisplay == SHOW_FADERS))
                 {
                     DisplayControlLabel((uint8_t)x, Label); // show the label on the MCU LCD by sending midi
                 }
                 if (Row.Type == FADER_TYPE || Row.Type == KNOB_TYPE) { DisplayWidgetValue(Row, (uint8_t)x, Value); }
+
             }
             else  // we end up here if the widget doesn't exist, so then we set the whole thing blank
             {
@@ -326,6 +336,7 @@ void LibMain::DisplayButtonRow(SurfaceRow Row, uint8_t firstbutton, uint8_t numb
 {
     std::string widgetname, oscwidget;
     std::string Caption, Label, Extras;
+    SurfaceWidget widget;
     double Value = 0;
     int x;
     uint8_t upcolor = 0;
@@ -348,24 +359,108 @@ void LibMain::DisplayButtonRow(SurfaceRow Row, uint8_t firstbutton, uint8_t numb
 
     for (x = firstbutton + number - 1; x >= firstbutton; x--)
     {
-        if (Row.ActiveBank >= 0) {
-            widgetname = THIS_PREFIX + (std::string)"_" + Row.WidgetID + "_" + Row.BankIDs[Row.ActiveBank] + "_" + std::to_string(x);
-        }
-        if (Row.ActiveBank >= 0 && widgetExists(widgetname))
+        if (Row.ActiveBank >= 0)
         {
-            Value = getWidgetValue(widgetname);
-            Label = getWidgetCaption(widgetname);
+            widgetname = Row.WidgetPrefix + "_" + Row.BankIDs[Row.ActiveBank] + "_" + std::to_string(x);
+            widget = PopulateWidget(widgetname);
+
+            if (widget.IsSurfaceItemWidget)
+            {
+                oscwidget = Row.WidgetPrefix + "_active_" + std::to_string(x);  // same widget name with the bank # set to "active"
+                setWidgetCaption(oscwidget, widget.Caption);
+                setWidgetValue(oscwidget, 1.0 - widget.Value);  // ensure a widget toggle so caption gets propagated
+                setWidgetValue(oscwidget, widget.Value);
+
+                DisplayWidgetValue(Row, x, widget.Value);
+            }
         }
-        else  // we end up here if the widget doesn't exist or there's no ActiveBank
-        {
-            Label = "";
-            Caption = "";
-            Value = 0.0;
-        }
-        oscwidget = THIS_PREFIX + (std::string)"_" + Row.WidgetID + "_active_" + std::to_string(x);  // same widget name with the bank # set to "active"
-        setWidgetCaption(oscwidget, Label);
-        setWidgetValue(oscwidget, 1.0 - Value);  // ensure a widget toggle so caption gets propagated
-        setWidgetValue(oscwidget, Value);
-        DisplayWidgetValue(Row, x, Value);
     }
+}
+
+
+// This extension expects widget names generally in the format "DevicePrefix_WidgetType_Bank_Column" where the "_" character is used as a delimiter.
+// An example widget would be "sl_k_1_0" referring to SLMK3 knob bank 1 column 0.
+// Extra parameters for widgets are looked for on a "widgetname_p" widget in the Caption.  Typically widget colors or knob resolution
+SurfaceWidget LibMain::PopulateWidget(std::string widgetname)
+{
+    SurfaceWidget widget;
+    std::string control_number, pcaption, pwidgetname;
+
+    if (widgetExists(widgetname))
+    {
+        widget.Value = getWidgetValue(widgetname);
+
+        std::vector<std::string> name_segments = ParseWidgetName(widgetname, '_');
+
+        if (name_segments.size() >= 4)
+        {
+            widget.SurfacePrefix = name_segments[0];
+            widget.WidgetID = name_segments[1];
+            widget.BankID = name_segments[2];
+            control_number = name_segments[3];
+
+            if (widget.SurfacePrefix == THIS_PREFIX)
+            {
+
+                widget.RowNumber = Surface.IdentifySurfaceRow(widget.WidgetID);
+
+                // is it a valid row identifier for this Surface?
+                if (widget.RowNumber >= 0)
+                {
+                    try
+                    {
+                        widget.IsRowParameterWidget = false;
+                        widget.Column = std::stoi(control_number);
+                        if (widget.RowNumber >= 0 && widget.RowNumber < std::size(Surface.Row))
+                        {
+                            if (widget.Column < Surface.Row[widget.RowNumber].Columns)
+                            {
+                                widget.IsSurfaceItemWidget = true;
+                                widget.TextValue = getWidgetTextValue(widgetname);
+                                widget.Caption = getWidgetCaption(widgetname);
+
+                                // we've checked for valid Surface prefix, row type, and valid column number for the
+                                // row, so it's a valid widget we don't check that the BankID is valid because by
+                                // definition a bank is valid if there's a valid widget for it
+                                widget.Validated = true;
+                                // pwidgetname = widgetname + "_p";
+                            }
+                        }
+                    }
+                    catch (...) // catch blow ups, such as stoi() if the widget name doesn't have a number where we
+                        // need a number
+                    {
+                        widget.Column = -1;
+                        widget.IsSurfaceItemWidget = false;
+                        widget.Validated = false;
+                    }
+
+                    // look for extra parameters on a parameter widget if it's a valid surface item widget
+                    if (widget.Validated)
+                    {
+
+                        // if there is a column speciic _kp_ widget that takes first priority, e.g. sl_kp_bank_0
+                        pwidgetname =
+                            widget.SurfacePrefix + "_" + widget.WidgetID + "p_" + widget.BankID + "_" + control_number;
+                        if (widgetExists(pwidgetname))
+                        {
+                            pcaption = getWidgetCaption(pwidgetname);
+                            if (!pcaption.empty())
+                            {
+                                size_t pos = pcaption.find("_");
+                                widget.Caption = pcaption.substr(0, pos);
+                            }
+                            widget.RgbLitColor = getWidgetFillColor(pwidgetname);  // for knobs LitColor is the knob color, DimColor is top bar color
+                            widget.RgbDimColor = getWidgetOutlineColor(pwidgetname);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        widget.Validated = false;
+    }
+    return widget;
 }

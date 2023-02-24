@@ -74,6 +74,9 @@ public:
     uint8_t KnobDotValue(uint8_t column);
     uint8_t KnobRingValue(uint8_t column);
 
+    SurfaceWidget PopulateWidget(std::string widgetname);
+
+
     // from Inputs.cpp
     void ProcessButton(uint8_t button, uint8_t value);
     void ToggleButton(SurfaceRow Row, uint8_t button);
@@ -273,24 +276,15 @@ public:
 
     void OnWidgetValueChanged(const std::string & widgetName, double newValue) override
     {
-        uint8_t column=255;
-        uint8_t banknumber, row;
-
-        std::string widget_prefix, control_type, control_bank, control_number, control_color, setwidget;
-
         // scriptLog("MC: Widget changed: " + widgetName, 1);
         if (Surface.IgnoreWidget != "") {
             scriptLog("MC: Ignoring widget: " + widgetName, 0);
             Surface.IgnoreWidget = "";
         }
-        else {
-
-            // widget names are generally structured as [controller id]_[control type]_[bank]_[unit]_[optional additional arguments]
-            // typical would be "mc_f_3_1" to indicate MCU controller, fader, bank 3, fader 1.  Banks are typically 1-8, knobs and faders numbered 0-7.
-            std::vector< std::string> name_segments = ParseWidgetName(widgetName, '_');
-
+        else
+        {
             if (widgetName == LAYOUT_WIDGETNAME) {  // if it's a widget that changes the control layout
-                column = (uint8_t) round(1 / std::max(newValue, 1.0 / 127)) - 1;
+                uint8_t column = (uint8_t) round(1 / std::max(newValue, 1.0 / 127)) - 1;
                 if (column != Surface.ButtonLayout)
                 {
                     SetSurfaceLayout(column);
@@ -300,43 +294,26 @@ public:
             {
                 SetRowAssignments();
             }
-            else if (name_segments.size() >= 4)  // our widgets all have at least 4 fields in the name, e.g., mc_f_bank_1
+            else
             {
-                widget_prefix = name_segments[0];
-                control_type = name_segments[1];
-                control_bank = name_segments[2];
-                control_number = name_segments[3];
-                if (name_segments.size() > 4) {
-                    control_color = name_segments[4];
-                }
+                SurfaceWidget widget = PopulateWidget(widgetName);
 
-                column = std::stoi("0" + control_number);
-                if (std::to_string(column) != control_number) { column = 255; } // flag it as 255 if it's an invalid id
-                // scriptLog("MC: Parsed: " + widget_prefix + " " + control_type + " " + control_bank + " " + control_number + " ", 1);
-
-                if (control_bank != "active" && control_number != "b")  // we ignore the "active" bank, which is for OSC linking, and "b" column number for indicators
+                if (widget.IsSurfaceItemWidget)
                 {
-                    for (row = 0; row < std::size(Surface.Row); row++)  // cycle through each Row of control
+                    if (widget.BankID == Surface.Row[widget.RowNumber].ActiveBankID() && Surface.Row[widget.RowNumber].Showing == SHOW_ASSIGNED)
                     {
-                        if (control_type == Surface.Row[row].WidgetID && Surface.Row[row].Showing == SHOW_ASSIGNED && column <= Surface.Row[row].Columns && Surface.Row[row].BankValid())
+//                        setWidgetValue(Surface.Row[widget.RowNumber].WidgetPrefix + "_active_" + widget.Column, newValue);
+                        setWidgetValue( widget.SurfacePrefix + widget.WidgetID + "_active_" + std::to_string(widget.Column), newValue);
+                        DisplayWidgetValue(Surface.Row[widget.RowNumber], widget.Column, newValue);
+
+                        if (Surface.reportWidgetChanges == true && Surface.TextDisplay != SHOW_SONGS)  // show changes on upper left display if not showing racks/songs
                         {
-                            //scriptLog("MC: Callback for " + widgetName, 1);
-                            if (control_bank.compare(Surface.Row[row].BankIDs[Surface.Row[row].ActiveBank]) == 0)  // if it's the active bank we show it on the control surface
-                            {
-                                // scriptLog("WCallback Row:" + std::to_string(row) + " ID:" + Surface.Row[row].WidgetID + " Val:" + std::to_string(newValue), 1);
-                                setWidgetValue(Surface.Row[row].WidgetPrefix + "_active_" + control_number, newValue);
-                                DisplayWidgetValue(Surface.Row[row], column, newValue);
-                                if (Surface.reportWidgetChanges == true && Surface.TextDisplay != SHOW_SONGS)  // show changes on upper left display if not showing racks/songs
-                                {
-                                    DisplayTopLeft(column, Surface.Row[row].RowLabel + std::to_string(column + 1) + ": " + getWidgetTextValue(widgetName));
-                                }
-                            }
+                            DisplayTopLeft(widget.Column, widget.Caption + " : " + widget.TextValue);
                         }
                     }
                 }
             }
         } // IgnoreWidget check
-
     } 
 
     // A midi device was added or removed
