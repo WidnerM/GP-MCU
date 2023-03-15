@@ -2,9 +2,6 @@
 
 #pragma once
 
-
-
-
 #define VPOT_DISPLAY_SINGLE_DOT 0
 #define VPOT_DISPLAY_BOOST_CUT 1
 #define VPOT_DISPLAY_WRAP 2

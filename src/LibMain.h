@@ -209,9 +209,9 @@ public:
     }
 
     // Light or unlight the play state button
-    void OnGlobalPlayStateChanged(bool playing) override
+    void OnGlobalPlayStateChanged(double playing) override
     {
-        consoleLog(std::string("playing = ") + (playing ? " true" : "false"));
+        // consoleLog(std::string("playing = ") + (playing ? " true" : "false"));
         sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(SID_TRANSPORT_PLAY, (playing == 1) ? BUTTON_LIT : BUTTON_OFF, 0));
     }
 

@@ -75,7 +75,7 @@ void LibMain::InvokeMenu(int index)
             break;
         case 2:
             if (widgetExists(LAYOUT_WIDGETNAME)) { setWidgetValue(LAYOUT_WIDGETNAME, 0.33333); }
-            else SetSurfaceLayout(1);
+            else SetSurfaceLayout(2);
             break;
         case 3:
             OnStatusChanged(GPStatus_GigFinishedLoading);
