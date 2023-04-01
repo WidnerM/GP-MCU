@@ -379,8 +379,8 @@ void LibMain::DisplayButtonRow(SurfaceRow Row, uint8_t firstbutton, uint8_t numb
 
 
 // This extension expects widget names generally in the format "DevicePrefix_WidgetType_Bank_Column" where the "_" character is used as a delimiter.
-// An example widget would be "sl_k_1_0" referring to SLMK3 knob bank 1 column 0.
-// Extra parameters for widgets are looked for on a "widgetname_p" widget in the Caption.  Typically widget colors or knob resolution
+// An example widget would be "mc_k_pan_0" referring to MCU knob bank 'pan' column 0.
+// Extra parameters for widgets are looked for on a "mc_kp_pan_0" widget in the Caption.
 SurfaceWidget LibMain::PopulateWidget(std::string widgetname)
 {
     SurfaceWidget widget;
