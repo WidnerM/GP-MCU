@@ -16,7 +16,7 @@
 const std::string XMLProductDescription =   
      // Replace with your information            
     "<Library>" 
-    "<Product Name=\"GP MCU Extension\" Version=\"1.0\" BuildDate=\"6/4/2021\"></Product> "
+    "<Product Name=\"MCU Extension\" Version=\"0.9\" BuildDate=\"4/1/2023\"></Product> "
     "<Description>Control integration for Mackie MCU protocol devices.</Description>"
     "<ImagePath>/Users/Downloads/nothing.jpg</ImagePath>"
     "</Library>";
@@ -73,6 +73,7 @@ public:
     void DisplayControlLabel(uint8_t column, const std::string caption);
     uint8_t KnobDotValue(uint8_t column);
     uint8_t KnobRingValue(uint8_t column);
+    void ClearRow(SurfaceRow Row);
 
     SurfaceWidget PopulateWidget(std::string widgetname);
 
@@ -209,7 +210,7 @@ public:
     }
 
     // Light or unlight the play state button
-    void OnGlobalPlayStateChanged(double playing) override
+    void OnGlobalPlayStateChanged(bool playing) override
     {
         // consoleLog(std::string("playing = ") + (playing ? " true" : "false"));
         sendMidiMessage(gigperformer::sdk::GPMidiMessage::makeNoteOnMessage(SID_TRANSPORT_PLAY, (playing == 1) ? BUTTON_LIT : BUTTON_OFF, 0));
