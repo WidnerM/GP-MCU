@@ -177,7 +177,7 @@ void LibMain::ToggleButton(SurfaceRow Row, uint8_t button)
 
 void LibMain::ProcessKnob(uint8_t column, uint8_t value)  // processes a midi message for a knob turn (0-7)
 {
-    std::string widgetname, caption;
+    std::string widgetname, pwidgetname, caption;
     int resolution = 200;
     double newValue = 0;
 
@@ -188,11 +188,12 @@ void LibMain::ProcessKnob(uint8_t column, uint8_t value)  // processes a midi me
         {
             if (column < 8) // if it's < 8 it's a real knob
             {
-                if (widgetExists(widgetname + "_p"))  // if there's a mc_k_1_5_p type caption, process first field as resolution (integer)
+                pwidgetname = KNOB_PREFIX + (std::string)"p_" + Surface.Row[KNOB_ROW].BankIDs[Surface.Row[KNOB_ROW].ActiveBank] + "_" + std::to_string(column);
+                if (widgetExists(pwidgetname))  // if there's a mc_kp_1_5 type caption, process first field as resolution (integer)
                 {
-                    caption = getWidgetCaption(widgetname + "_p");
+                    caption = getWidgetCaption(pwidgetname);
                     std::vector< std::string> name_segments = ParseWidgetName(caption, '_');
-                    (name_segments.size() >= 1) ? resolution = (int)std::stoi("0" + name_segments[0]) : resolution = 200;  // default to 200
+                    (name_segments.size() > 1) ? resolution = (int)std::stoi("0" + name_segments[1]) : resolution = 200;  // default to 200
                 }
                 newValue = getWidgetValue(widgetname);
                 if (value < 0x10) {  // small numbers are turns in the clockwise direction

@@ -1,45 +1,33 @@
-# GP Extension example for C++
+# MCU Controller Extension for Gig Performer
 
-This is an example extension using the [Gig Performer SDK](https://github.com/gigperformer/gp-sdk).
-You can use it as a base for your own extensions developed in plain C++ (without JUCE).
+## Overview
 
-## How to build...
+An extension for [Gig Performer](https://gigperformer.com) to utilize the MCU-compatible controllers.  Popular controllers using the MCU protocol include the Icon Platform M+, the Behringer X-Touch, Presonus FaderPort, etc.
 
-### ... on macOS
+> _Disclaimer: This is a user-created extension and is not supported by Deskew Technologies. Extensions can cause unexpected behaviour in Gig Performer, and in extreme situations could cause it to crash. Please test it thoroughly before using it in any live performances!_
 
--   Make sure you have [CMake](https://cmake.org) installed.
-    You might have to add the path to the cmake executable by adding this line to your bash profile:
+## Installation
 
-    ```bash
-    export PATH=/Applications/CMake.app/Contents/bin:$PATH
-    ```
+Download the extension (library) files for either MacOS or Windows from the [GP-MCU Extension](https://github.com/WidnerM/GP-MCU/releases) page.  
 
-    Alternatively, you can install CMake via [Homebrew](https://brew.sh):
+Mac users will need to move the _libGP-MCU.dylib_ file into this folder and then restart Gig Performer:
+```
+/Users/Shared/Gig Performer/Extensions
+```
+Windows users will need to move the _GP-MCU.dll_ file into this folder and then restart Gig Performer:
+```
+C:\Users\Public\Documents\Gig Performer\Extensions
+```
+When opening Gig Performer, a prompt will appear asking to confirm whether to install the extension.
 
-    ```bash
-    brew install cmake
-    ```
+## Usage
 
--   Build (and install) the project via CMake.
-    For your convenience we have provided a `build.sh` which contains all necessary commands:
+For the extension to successfully communicate with your MCU controller you must put your controller into MCU compatibility mode.  How you do this depends on the make and model of your controller.
 
-    ```bash
-    ./build.sh
-    ```
+Documentation is available in this repository describing the functionality of the extension and how to configure your Rackspaces, Songs, and Widgets to interact with the MC controller in the manner you would like.
 
-### ... on Windows
+A demonstration Gigfile is also provided in this repository.  You should be able to load this Gigfile, see how it interacts with the controller, and look at the various widgets to see how their configurations translate into what you see on the MCU controller.  This is fully described in the documentation, but may be easier to grasp by playing with the example Gigfile.
 
--   Make sure you have [CMake](https://cmake.org), [Git](https://git-scm.com) and a C(++) compiler installed.
-    You can get that for example by installing [Visual Studio](https://visualstudio.microsoft.com) with the _Desktop development with C++_ workload and the _Git for Windows_ component.
--   Build (and install) the project via CMake.
-    For your convenience we have provided a `build.cmd` which contains all necessary commands:
+## Building the Extension
 
-    ```bash
-    build.cmd
-    ```
-
-    **Make sure to run the script from the Visual Studio developer command prompt!**
-
-
-    https://github.com/jean-emmanuel/open-stage-control-mcu
-    https://github.com/NicoG60/TouchMCU
+To customize/build the extension, refer to the [Gig Performer SDK](https://github.com/gigperformer/gp-sdk) GitHub page.

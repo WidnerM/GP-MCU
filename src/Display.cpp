@@ -299,12 +299,6 @@ void LibMain::DisplayFaders(SurfaceRow Row)
                 Label = widget.Caption;
                 TextValue = widget.TextValue;
 
-                if ((Row.Type == KNOB_TYPE && Surface.TextDisplay == SHOW_KNOBS) || (Row.Type == FADER_TYPE && Surface.TextDisplay == SHOW_FADERS))
-                {
-                    DisplayControlLabel((uint8_t)x, Label); // show the label on the MCU LCD by sending midi
-                }
-                if (Row.Type == FADER_TYPE || Row.Type == KNOB_TYPE) { DisplayWidgetValue(Row, (uint8_t)x, Value); }
-
             }
             else  // we end up here if the widget doesn't exist, so then we set the whole thing blank
             {
@@ -313,6 +307,13 @@ void LibMain::DisplayFaders(SurfaceRow Row)
                 Value = 0;
                 // Show = false;
             }
+
+            if ((Row.Type == KNOB_TYPE && Surface.TextDisplay == SHOW_KNOBS) || (Row.Type == FADER_TYPE && Surface.TextDisplay == SHOW_FADERS))
+            {
+                DisplayControlLabel((uint8_t)x, Label); // show the label on the MCU LCD by sending midi
+            }
+            if (Row.Type == FADER_TYPE || Row.Type == KNOB_TYPE) { DisplayWidgetValue(Row, (uint8_t)x, Value); }
+
         }
         else {
             Label = " ";
@@ -357,14 +358,14 @@ void LibMain::DisplayButtonRow(SurfaceRow Row, uint8_t firstbutton, uint8_t numb
         }
     }
 
-    for (x = firstbutton + number - 1; x >= firstbutton; x--)
+    if (Row.BankValid())
     {
-        if (Row.ActiveBank >= 0)
+        for (x = firstbutton + number - 1; x >= firstbutton; x--)
         {
             widgetname = Row.WidgetPrefix + "_" + Row.BankIDs[Row.ActiveBank] + "_" + std::to_string(x);
             widget = PopulateWidget(widgetname);
 
-            if (widget.IsSurfaceItemWidget)
+            // if (widget.IsSurfaceItemWidget)
             {
                 oscwidget = Row.WidgetPrefix + "_active_" + std::to_string(x);  // same widget name with the bank # set to "active"
                 setWidgetCaption(oscwidget, widget.Caption);
@@ -375,12 +376,30 @@ void LibMain::DisplayButtonRow(SurfaceRow Row, uint8_t firstbutton, uint8_t numb
             }
         }
     }
+    else
+    {
+        ClearRow(Row);
+    }
 }
 
+void LibMain::ClearRow(SurfaceRow Row)
+{
+    std::string oscwidget;
+
+    for (uint8_t x = 0; x < Row.Columns; x++)
+    {
+        oscwidget = Row.WidgetPrefix + "_active_" + std::to_string(x);  // same widget name with the bank # set to "active"
+        setWidgetCaption(oscwidget, "-");
+        setWidgetValue(oscwidget, 0.1);  // ensure a widget toggle so caption gets propagated
+        setWidgetValue(oscwidget, 0);
+
+        DisplayWidgetValue(Row, x, 0);
+    }
+}
 
 // This extension expects widget names generally in the format "DevicePrefix_WidgetType_Bank_Column" where the "_" character is used as a delimiter.
-// An example widget would be "sl_k_1_0" referring to SLMK3 knob bank 1 column 0.
-// Extra parameters for widgets are looked for on a "widgetname_p" widget in the Caption.  Typically widget colors or knob resolution
+// An example widget would be "mc_k_pan_0" referring to MCU knob bank 'pan' column 0.
+// Extra parameters for widgets are looked for on a "mc_kp_pan_0" widget in the Caption.
 SurfaceWidget LibMain::PopulateWidget(std::string widgetname)
 {
     SurfaceWidget widget;
