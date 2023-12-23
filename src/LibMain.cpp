@@ -79,6 +79,7 @@ void LibMain::InvokeMenu(int index)
             break;
         case 3:
             OnStatusChanged(GPStatus_GigFinishedLoading);
+            // setWidgetBounds("BoundsWidget", 10, 10, 100, 100);
             break;
 
         default:

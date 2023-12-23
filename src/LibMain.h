@@ -75,7 +75,7 @@ public:
     uint8_t KnobRingValue(uint8_t column);
 
     SurfaceWidget PopulateWidget(std::string widgetname);
-
+    
 
     // from Inputs.cpp
     void ProcessButton(uint8_t button, uint8_t value);
@@ -122,7 +122,7 @@ public:
                 }
             }
         }
-
+        
         for (int i = 0; i < getMidiOutDeviceCount(); i++)
         {
             name = getMidiOutDeviceName(i);
