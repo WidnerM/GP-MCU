@@ -65,6 +65,7 @@ void LibMain::DisplayText(uint8_t column, uint8_t row, std::string text, uint8_t
         binmessage = gigperformer::sdk::GPUtils::hex2binaryString(hexmessage);
         sendMidiMessage(binmessage);
     }
+    // DisplayP1MText(column, row, text, maxlength);
 }
 
 // Displays a string on the upper right of the MCU text display
@@ -294,11 +295,9 @@ void LibMain::DisplayFaders(SurfaceRow Row)
             widget = PopulateWidget(widgetname);
             if (widget.IsSurfaceItemWidget)
             {
-
                 Value = widget.Value;
                 Label = widget.Caption;
                 TextValue = widget.TextValue;
-
             }
             else  // we end up here if the widget doesn't exist, so then we set the whole thing blank
             {

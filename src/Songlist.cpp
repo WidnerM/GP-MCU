@@ -80,8 +80,10 @@ void LibMain::DisplaySongs(SurfaceRow Row, bool forcetocurrent)
         oscwidget = THIS_PREFIX + (std::string) "_" + Row.WidgetID + "_active_" + std::to_string(x);
         if (widgetExists(oscwidget))
         {
-            setWidgetCaption(oscwidget, songname); 
-            setWidgetValue(oscwidget, 1.0 - selected);  // we force a toggle to force OSC to update the Caption.  GP doesn't send an OSC update if WidgetValue stays the same.
+            setWidgetCaption(oscwidget, songname);
+            // we force a value change to force OSC to update the Caption.  GP doesn't send an OSC update if WidgetValue stays the same.
+            if (selected == getWidgetValue(oscwidget)) { selected > 0.9 ? setWidgetValue(oscwidget, 0.95 ) : setWidgetValue(oscwidget, 0.05); }
+            // setWidgetValue(oscwidget, 1.0 - selected);  
             setWidgetValue(oscwidget, selected);
         }
         songindex++;
@@ -230,8 +232,8 @@ void LibMain::DisplayRacks(SurfaceRow Row, bool forcetocurrent)
         if (widgetExists(oscwidget))
         {
             setWidgetCaption(oscwidget, rackname);
-            setWidgetValue(oscwidget, 1.0 - selected); // we toggle the value of the widget to get GP to send an OSC update for the label change
-            setWidgetValue(oscwidget, selected);
+            if (selected == getWidgetValue(oscwidget)) { selected > 0.9 ? setWidgetValue(oscwidget, 0.95) : setWidgetValue(oscwidget, 0.05); }
+            setWidgetValue(oscwidget, selected);  // There appears to be a race condition in GP where this may be missed if we don't stall it with a redundant write of the caption
         }
         rackindex++;
     }

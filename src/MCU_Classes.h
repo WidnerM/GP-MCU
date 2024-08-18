@@ -210,6 +210,14 @@ public:
 	}
 };
 
+// iCon P1-M/Nano/V1-M softbutton structure - string format byte, 16 character text
+class P1SoftButton
+{
+public:
+	uint8_t Format = 7;
+	std::string Label = "               ";
+};
+
 class SurfaceClass
 {
 public:
@@ -225,7 +233,9 @@ public:
 	uint8_t ButtonLayout = 0;
 	uint8_t RackRow = 255;
 	uint8_t VarRow = 255;
-
+	// bool P1MType = true;
+	// std::string P1MText = "                                                                                                               ";
+	// P1SoftButton P1SoftButtonArray[80];
 
 	bool Initialize()
 	{
@@ -254,6 +264,13 @@ public:
 		}
 		// Row[3].Showing = SHOW_SONGS;
 		// Row[2].Showing = SHOW_SONGPARTS;
+
+		// P1-M Softbutton array initialization
+		// for (x = 0; x < 80; x++)
+		// {
+		//	P1SoftButtonArray[x].Label = "Soft " + std::to_string(x+1);
+		//	P1SoftButtonArray[x].Format = 1;
+		// }
 
 		return true;
 	}

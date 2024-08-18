@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <math.h>
+#include <regex>
 #include "MCU_Classes.h"
 #include "General_Utils.h"
 
@@ -78,6 +79,13 @@ public:
     SurfaceWidget PopulateWidget(std::string widgetname);
     
 
+    // from P1 Extensions.cpp
+    //void InitializeP1M();
+    //void ClearP1MDisplay();
+    //void CleanP1M();
+    //void DisplayP1MText(uint8_t column, uint8_t row, std::string text, uint8_t maxlength);
+
+
     // from Inputs.cpp
     void ProcessButton(uint8_t button, uint8_t value);
     void ToggleButton(SurfaceRow Row, uint8_t button);
@@ -110,12 +118,13 @@ public:
         std::string name;
         std::vector <std::string> validInPorts = {};
         std::vector <std::string> validOutPorts = {};
+        std::regex rgx;
 
         for (int i = 0; i < getMidiInDeviceCount(); i++)
         {
             name = getMidiInDeviceName(i);
             for (int j = 0; j < MidiIn.size(); j++) {
-                if (name == MidiIn[j]) {
+                if (std::regex_match(name, std::regex(MidiIn[j]))) {
                     listenForMidi(getMidiInDeviceName(i), 1);
                     foundin = true;
                     validInPorts.push_back(name);
@@ -129,9 +138,13 @@ public:
             name = getMidiOutDeviceName(i);
             // scriptLog("Evaluating midi out " + name, 1);
             for (int j = 0; j < MidiOut.size(); j++) {
-                if (name == MidiOut[j]) { 
+                if (regex_match(name, std::regex(MidiOut[j])) ) { 
                     foundout = true; 
                     validOutPorts.push_back(name);
+                    // if (regex_match(name, std::regex(P1M_REGEX)))
+                    // {
+                    //    Surface.P1MType = true;
+                    // }
                     scriptLog("MCU:  Using midi out " + name, 0);
                 }
             }
@@ -304,7 +317,7 @@ public:
                     if (widget.BankID == Surface.Row[widget.RowNumber].ActiveBankID() && Surface.Row[widget.RowNumber].Showing == SHOW_ASSIGNED)
                     {
 //                        setWidgetValue(Surface.Row[widget.RowNumber].WidgetPrefix + "_active_" + widget.Column, newValue);
-                        setWidgetValue( widget.SurfacePrefix + widget.WidgetID + "_active_" + std::to_string(widget.Column), newValue);
+                        setWidgetValue( widget.SurfacePrefix + "_" + widget.WidgetID + "_active_" + std::to_string(widget.Column), newValue);
                         DisplayWidgetValue(Surface.Row[widget.RowNumber], widget.Column, newValue);
 
                         if (Surface.reportWidgetChanges == true && Surface.TextDisplay != SHOW_SONGS)  // show changes on upper left display if not showing racks/songs
