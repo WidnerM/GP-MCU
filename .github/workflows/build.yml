@@ -33,7 +33,7 @@ jobs:
             CMAKE_ADDITIONAL_OPTIONS: "-D 'GIG_PERFORMER_EXTENSIONS_DIRECTORY=${{ github.workspace }}/build/install'"
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: "Ccache"
               uses: hendrikmuhs/ccache-action@ed038da2f2f09b0c8387c00e1498290a4808da2e # v1.2.2
               if: env.CCACHE_AVAILABLE == 'true'
