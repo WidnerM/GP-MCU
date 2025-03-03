@@ -1,9 +1,9 @@
 name: Build
 on:
     pull_request:
-        branches: ["master"]
+        branches: ["main"]
     push:
-        branches: ["master"]
+        branches: ["main"]
 
 permissions:
     repository-projects: read
@@ -18,24 +18,24 @@ jobs:
             matrix:
                 config:
                     - name: "macOS - universal"
-                      os: "macos-latest"
+                      os: "macos-12"
                       cmake_preset: "mac-universal"
                       build_config: "Release"
                     - name: "Windows"
-                      os: "windows-latest"
+                      os: "windows-2019"
                       cmake_preset: "windows-native"
                       build_config: "Release"
         env:
             # Unfortunately, Ccache is not available yet for Windows and MSVC
-            CCACHE_AVAILABLE: ${{ matrix.config.os == 'macos-latest' }}
+            CCACHE_AVAILABLE: ${{ matrix.config.os == 'macos-12' }}
 
             # To store the build extension later, we store it inside the build cache
             CMAKE_ADDITIONAL_OPTIONS: "-D 'GIG_PERFORMER_EXTENSIONS_DIRECTORY=${{ github.workspace }}/build/install'"
         steps:
             - name: Checkout
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
             - name: "Ccache"
-              uses: hendrikmuhs/ccache-action@ed038da2f2f09b0c8387c00e1498290a4808da2e # v1.2.2
+              uses: hendrikmuhs/ccache-action@faf867a11c028c0b483fb2ae72b6fc8f7d842714 # v1.2.12
               if: env.CCACHE_AVAILABLE == 'true'
               with:
                   key: ${{ matrix.config.os }}-${{ matrix.config.cmake_preset }}
@@ -59,5 +59,5 @@ jobs:
             - name: Store extension
               uses: actions/upload-artifact@v4
               with:
-                  name: extension-${{ matrix.runs-on }}
+                  name: ${{ github.event.repository.name }}-${{ matrix.config.cmake_preset }}
                   path: build/install
