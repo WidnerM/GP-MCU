@@ -27,7 +27,7 @@ jobs:
                       build_config: "Release"
         env:
             # Unfortunately, Ccache is not available yet for Windows and MSVC
-            CCACHE_AVAILABLE: ${{ matrix.config.os == 'macos-11' }}
+            CCACHE_AVAILABLE: ${{ matrix.config.os == 'macos-latest' }}
 
             # To store the build extension later, we store it inside the build cache
             CMAKE_ADDITIONAL_OPTIONS: "-D 'GIG_PERFORMER_EXTENSIONS_DIRECTORY=${{ github.workspace }}/build/install'"
@@ -57,7 +57,7 @@ jobs:
             - name: "CMake: Install"
               run: cmake --install build/${{ matrix.config.cmake_preset }} --config ${{ matrix.config.build_config }}
             - name: Store extension
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
-                  name: extension
+                  name: extension-${{ matrix.runs-on }}
                   path: build/install
