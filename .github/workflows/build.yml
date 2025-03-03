@@ -18,11 +18,11 @@ jobs:
             matrix:
                 config:
                     - name: "macOS - universal"
-                      os: "macos-11"
+                      os: "macos-latest"
                       cmake_preset: "mac-universal"
                       build_config: "Release"
                     - name: "Windows"
-                      os: "windows-2019"
+                      os: "windows-latest"
                       cmake_preset: "windows-native"
                       build_config: "Release"
         env:
