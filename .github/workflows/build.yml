@@ -35,7 +35,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
             - name: "Ccache"
-              uses: hendrikmuhs/ccache-action@faf867a11c028c0b483fb2ae72b6fc8f7d842714 # v1.2.12
+              uses: hendrikmuhs/ccache-action@63069e3931dedbf3b63792097479563182fe70d1 # v1.2.18
               if: env.CCACHE_AVAILABLE == 'true'
               with:
                   key: ${{ matrix.config.os }}-${{ matrix.config.cmake_preset }}
