@@ -17,7 +17,7 @@
 const std::string XMLProductDescription =   
      // Replace with your information            
     "<Library>" 
-    "<Product Name=\"MCU Extension\" Version=\"0.9\" BuildDate=\"4/1/2023\"></Product> "
+    "<Product Name=\"MCU Extension\" Version=\"1.0\" BuildDate=\"12/19/2025\"></Product> "
     "<Description>Control integration for Mackie MCU protocol devices.</Description>"
     "<ImagePath>/Users/Downloads/nothing.jpg</ImagePath>"
     "</Library>";
