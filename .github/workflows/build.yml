@@ -57,7 +57,7 @@ jobs:
             - name: "CMake: Install"
               run: cmake --install build/${{ matrix.config.cmake_preset }} --config ${{ matrix.config.build_config }}
             - name: Store extension
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v6
               with:
                   name: ${{ github.event.repository.name }}-${{ matrix.config.cmake_preset }}
                   path: build/install
