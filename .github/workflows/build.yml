@@ -17,9 +17,13 @@ jobs:
             fail-fast: false
             matrix:
                 config:
-                    - name: "macOS - universal"
-                      os: "macos-13"
-                      cmake_preset: "mac-universal"
+                    - name: "macOS - native"
+                      os: "macos-latest"
+                      cmake_preset: "mac-native"
+                      build_config: "Release"
+                    - name: "macOS - intel"
+                      os: "macos-15-intel"
+                      cmake_preset: "mac-intel"
                       build_config: "Release"
                     - name: "Windows"
                       os: "windows-latest"
