@@ -17,9 +17,9 @@ jobs:
             fail-fast: false
             matrix:
                 config:
-                    - name: "macOS - native"
-                      os: "macos-14"
-                      cmake_preset: "mac-latest"
+                    - name: "macOS - universal"
+                      os: "macos-13"
+                      cmake_preset: "mac-universal"
                       build_config: "Release"
                     - name: "Windows"
                       os: "windows-latest"
