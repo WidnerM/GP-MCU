@@ -15,7 +15,8 @@
 #define KNOB_BUTTON_PREFIX "mc_push"
 #define FUNCTION_PREFIX "mc_fn"
 #define VIEW_PREFIX "mc_view"
-#define ROW_PREFIX_ARRAY {RECORD_PREFIX, SOLO_PREFIX, MUTE_PREFIX, SELECT_PREFIX, FUNCTION_PREFIX, VIEW_PREFIX, KNOB_BUTTON_PREFIX, FADER_PREFIX, KNOB_PREFIX}
+#define VU_PREFIX "mc_vu"
+#define ROW_PREFIX_ARRAY {RECORD_PREFIX, SOLO_PREFIX, MUTE_PREFIX, SELECT_PREFIX, FUNCTION_PREFIX, VIEW_PREFIX, KNOB_BUTTON_PREFIX, FADER_PREFIX, KNOB_PREFIX, VU_PREFIX}
 
 
 
@@ -28,15 +29,17 @@
 #define KNOB_BUTTON_TAG "push"
 #define FUNCTION_TAG "fn"
 #define VIEW_TAG "view"
+#define VU_TAG "vu"
 
-#define TAG_ARRAY {RECORD_TAG, SOLO_TAG, MUTE_TAG, SELECT_TAG, FUNCTION_TAG, VIEW_TAG, KNOB_BUTTON_TAG, FADER_TAG, KNOB_TAG}
-#define ROW_LABEL_ARRAY { "Rec", "Solo", "Mute", "Sel", "Fn", "View", "KPush" , "Fader", "Knob"}
+#define TAG_ARRAY {RECORD_TAG, SOLO_TAG, MUTE_TAG, SELECT_TAG, FUNCTION_TAG, VIEW_TAG, KNOB_BUTTON_TAG, FADER_TAG, KNOB_TAG, VU_TAG}
+#define ROW_LABEL_ARRAY { "Rec", "Solo", "Mute", "Sel", "Fn", "View", "KPush" , "Fader", "Knob", "VU"}
 
 #define BUTTON_TYPE "Button"
 #define FADER_TYPE "Fader"
 #define KNOB_TYPE "Knob"
 #define KNOB_BUTTON_TYPE "KButton"
-#define ROW_TYPE_ARRAY {BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, KNOB_BUTTON_TYPE, FADER_TYPE, KNOB_TYPE}
+#define VU_TYPE "VU"
+#define ROW_TYPE_ARRAY {BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, BUTTON_TYPE, KNOB_BUTTON_TYPE, FADER_TYPE, KNOB_TYPE, VU_TYPE}
 
 
 #define SHOW_SONGS 0
@@ -61,6 +64,7 @@
 #define KNOB_BUTTON_ROW 6
 #define FADER_ROW 7
 #define KNOB_ROW 8
+#define VU_ROW 9
 
 
 #define SONGSRACKS_SELECT 0
@@ -221,7 +225,7 @@ public:
 class SurfaceClass
 {
 public:
-	SurfaceRow Row[9];
+	SurfaceRow Row[10];
 	uint8_t ButtonRows = 7;
 	std::string IgnoreWidget = "";
 	bool reportWidgetChanges = true;
@@ -245,10 +249,10 @@ public:
 		std::string row_types[] = ROW_TYPE_ARRAY;
 		std::string row_labels[] = ROW_LABEL_ARRAY;
 		uint8_t show_array[] = SHOW_ARRAY;
-		uint8_t midi_commands[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xB0, 0xE0, 0xB0 };
+		uint8_t midi_commands[] = { 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0xB0, 0xE0, 0xB0, 0xD0 };
 		int row_columns[] = { 8, 8, 8, 8, 8, 8, 8, 9, 8 };
 
-		uint8_t first_midi[] = { SID_RECORD_ARM_BASE, SID_SOLO_BASE, SID_MUTE_BASE, SID_SELECT_BASE, SID_FUNCTION_BASE, SID_VIEW_BASE, SID_VPOD_PUSH_BASE, FADER_0, KNOB_0};
+		uint8_t first_midi[] = { SID_RECORD_ARM_BASE, SID_SOLO_BASE, SID_MUTE_BASE, SID_SELECT_BASE, SID_FUNCTION_BASE, SID_VIEW_BASE, SID_VPOD_PUSH_BASE, FADER_0, KNOB_0, SID_VU_BASE};
 
 		// basic Surface structure initializations
 		for (x = 0; x < std::size(Row); x++)

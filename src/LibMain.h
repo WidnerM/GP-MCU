@@ -17,7 +17,7 @@
 const std::string XMLProductDescription =   
      // Replace with your information            
     "<Library>" 
-    "<Product Name=\"MCU Extension\" Version=\"1.0\" BuildDate=\"12/19/2025\"></Product> "
+    "<Product Name=\"MCU Extension\" Version=\"1.1\" BuildDate=\"12/25/2025\"></Product> "
     "<Description>Control integration for Mackie MCU protocol devices.</Description>"
     "<ImagePath>/Users/Downloads/nothing.jpg</ImagePath>"
     "</Library>";
@@ -75,6 +75,7 @@ public:
     uint8_t KnobDotValue(uint8_t column);
     uint8_t KnobRingValue(uint8_t column);
     void ClearRow(SurfaceRow Row);
+    void ClearVUs();
 
     SurfaceWidget PopulateWidget(std::string widgetname);
     
@@ -480,7 +481,7 @@ public:
 
     /// examines a Row of widgets and determines which bank should be active and sets things accordingly
     /// this is required because after Rackspace or Variation switching we can end up in states where multiple banks or no banks are flagged as "active" by the 'b' widgets
-    void setActiveBank(int row)
+    bool setActiveBank(int row)
     {
         std::string widgetname;
         int index;
@@ -507,6 +508,7 @@ public:
             }
             if (Surface.Row[row].ActiveBank == -1) { Surface.Row[row].ActiveBank = 0; } // if there are no bank indicator widgets, set ActiveBank to first bank
         }
+		return (Surface.Row[row].ActiveBank != -1);
     }
 
     // Called when rackspace changed
@@ -568,6 +570,9 @@ public:
         setActiveBank(FADER_ROW);
         DisplayFaders(Surface.Row[FADER_ROW]);
 
+		ClearVUs();  // easiest to just clear all the VU meters on rackspace change, new ones will be drawn as needed.
+        setActiveBank(VU_ROW);
+
         DisplayModeButtons();
 
 
@@ -603,6 +608,8 @@ public:
         DisplayFaders(Surface.Row[FADER_ROW]);
         // scriptLog("Finishing OnVariationChanged.", 1);
         Surface.reportWidgetChanges = true;
+
+        setActiveBank(VU_ROW);
 
         DisplayModeButtons();
     }
